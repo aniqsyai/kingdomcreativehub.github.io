@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kingdom Creative Hub (KCH) | V2.1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --kingdom-red: #EB1C24;
+            --kingdom-dark: #1A1A1A;
+            --kingdom-gray: #F4F4F7;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--kingdom-gray);
+            color: var(--kingdom-dark);
+        }
+
+        /* Utility & Animations */
+        .bg-kingdom-red { background-color: var(--kingdom-red); }
+        .text-kingdom-red { color: var(--kingdom-red); }
+        .border-kingdom-red { border-color: var(--kingdom-red); }
+
+        .sidebar-link.active {
+            background-color: rgba(235, 28, 36, 0.1);
+            color: var(--kingdom-red);
+            border-right: 4px solid var(--kingdom-red);
+        }
+
+        .tab-btn.active {
+            border-bottom: 2px solid var(--kingdom-red);
+            color: var(--kingdom-red);
+        }
+
+        .pin {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            background: var(--kingdom-red);
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translate(-50%, -50%);
+            z-index: 30;
+        }
+        .pin:hover { transform: translate(-50%, -50%) scale(1.15); z-index: 40; }
+        .pin.new-anim { animation: pinBounce 0.4s ease-out; }
+
+        @keyframes pinBounce {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            70% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            transition: opacity 0.3s ease;
+        }
+
+        #video-canvas.crosshair, #static-canvas.crosshair { cursor: crosshair; }
+        
+        .toast { animation: toastSlide 0.3s ease forwards; }
+        
+        @keyframes toastSlide {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .login-gradient { background: radial-gradient(circle at top right, #333, #1A1A1A); }
+
+        /* Video Player Specific Styles */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #EB1C24;
+            cursor: pointer;
+            margin-top: -5px;
+            box-shadow: 0 0 0 2px white;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 2px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+        }
+        
+        .bottleneck-stripe {
+            background-image: repeating-linear-gradient(45deg, rgba(235, 28, 36, 0.1), rgba(235, 28, 36, 0.1) 10px, rgba(235, 28, 36, 0.2) 10px, rgba(235, 28, 36, 0.2) 20px);
+        }
+    </style>
+</head>
+<body class="h-screen overflow-hidden text-gray-800">
+
+    <!-- Login Gateway Overlay -->
+    <div id="login-screen" class="fixed inset-0 z-[1000] login-gradient flex flex-col items-center justify-center p-6 text-white">
+        <div class="mb-12 text-center">
+            <!-- Restored Logo from V1 -->
+            <img alt="Kingdom Digital Logo" width="100" height="100" class="w-[100px] object-contain mx-auto mb-4 rounded-2xl" style="color:transparent" src="kd.png">
+            <h1 class="text-3xl font-bold tracking-tight">KINGDOM <span class="text-gray-500 font-light uppercase text-xl">Creative Hub</span></h1>
+            <p class="text-gray-400 mt-2 text-sm">Please select your role to enter the portal</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+            <!-- Staff Login -->
+            <button onclick="login('staff')" class="group relative bg-white/5 border border-white/10 p-8 rounded-3xl hover:bg-white/10 hover:border-kingdom-red transition-all text-left">
+                <div class="w-12 h-12 rounded-full bg-kingdom-red/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <i data-lucide="shield-check" class="text-kingdom-red w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2">Agency Staff</h3>
+                <p class="text-gray-400 text-sm">Full operational access: Manage projects, timelines, and creative workflows.</p>
+                <div class="mt-8 flex items-center gap-2 text-xs font-bold text-kingdom-red opacity-0 group-hover:opacity-100 transition-opacity">
+                    AUTHENTICATE <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                </div>
+            </button>
+
+            <!-- Client Login -->
+            <button onclick="login('client')" class="group relative bg-white/5 border border-white/10 p-8 rounded-3xl hover:bg-white/10 hover:border-blue-400 transition-all text-left">
+                <div class="w-12 h-12 rounded-full bg-blue-400/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <i data-lucide="user" class="text-blue-400 w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2">Brand Client</h3>
+                <p class="text-gray-400 text-sm">Focused review access: View assets, provide feedback, and approve designs.</p>
+                <div class="mt-8 flex items-center gap-2 text-xs font-bold text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    ENTER PORTAL <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                </div>
+            </button>
+        </div>
+        
+        <p class="mt-12 text-gray-600 text-[10px] uppercase tracking-widest">Copyright © 2026 Kingdom Creative Hub</p>
+    </div>
+
+    <!-- Main App Layout (Hidden until login) -->
+    <div id="app-container" class="hidden flex h-screen w-full">
+        <!-- Notification Toasts Container -->
+        <div id="toast-container" class="fixed bottom-6 right-6 z-[100] flex flex-col gap-3"></div>
+
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col z-50">
+            <div class="p-6">
+                <div class="flex items-center gap-2 mb-8 cursor-pointer group" onclick="handleLogoClick()">
+                    <!-- Restored Sidebar Logo -->
+                    <img alt="Kingdom Digital Logo" width="40" height="40" class="w-[40px] object-contain rounded-lg" style="color:transparent" src="kd.png">
+                    <span class="font-bold text-lg tracking-tight">KINGDOM <span class="text-gray-400 font-light">HUB</span></span>
+                </div>
+                
+                <nav class="space-y-1">
+                    <button onclick="showSection('dashboard')" id="nav-dashboard" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all group">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                        <span class="font-medium">Dashboard</span>
+                    </button>
+                    <button onclick="showSection('projects')" id="nav-projects" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-gray-50 transition-all">
+                        <i data-lucide="layers" class="w-5 h-5"></i>
+                        <span class="font-medium">Project Hub</span>
+                    </button>
+                    <button onclick="showSection('review')" id="nav-review" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-gray-50 transition-all relative">
+                        <i data-lucide="video" class="w-5 h-5"></i>
+                        <span class="font-medium">Creative Review</span>
+                        <span id="review-badge" class="ml-auto bg-kingdom-red text-white text-[10px] px-1.5 py-0.5 rounded-full">3</span>
+                    </button>
+                    <button onclick="showSection('timeline')" id="nav-timeline" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-gray-50 transition-all">
+                        <i data-lucide="calendar" class="w-5 h-5"></i>
+                        <span class="font-medium">Production Sync</span>
+                    </button>
+                </nav>
+            </div>
+
+            <div class="mt-auto p-6 border-t border-gray-100">
+                <div class="flex items-center gap-3 mb-4">
+                    <div id="user-avatar" class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold overflow-hidden">
+                        RY
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                        <p id="user-name" class="text-sm font-semibold truncate">Ryan Ong</p>
+                        <p id="user-role" class="text-xs text-gray-400 uppercase tracking-widest truncate">CEO / Admin</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-gray-400 hover:text-kingdom-red transition-all">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Sign Out
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-hidden bg-gray-50">
+            <!-- Top Header -->
+            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shrink-0">
+                <div class="flex items-center gap-4">
+                    <h2 id="section-title" class="text-xl font-bold text-gray-800">Operational Dashboard</h2>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="relative cursor-pointer" onclick="showToast('Notifications are up to date.', 'info')">
+                        <i data-lucide="bell" class="w-5 h-5 text-gray-400 hover:text-gray-600 transition-colors"></i>
+                        <span class="absolute -top-1 -right-1 w-2 h-2 bg-kingdom-red rounded-full"></span>
+                    </div>
+                    <div class="h-8 w-[1px] bg-gray-200"></div>
+                    <button id="btn-new-campaign" onclick="openModal('campaign-modal')" class="bg-kingdom-red text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-lg shadow-red-200 hover:opacity-90 transition-all flex items-center gap-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> New Campaign
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div id="content-container" class="flex-1 overflow-y-auto p-8 no-scrollbar">
+                
+                <!-- Dashboard Section -->
+                <section id="dashboard-section" class="space-y-8">
+                    <!-- Alert Banner for Bottlenecks -->
+                    <div id="dashboard-alert" class="hidden bg-red-50 border border-red-100 p-4 rounded-xl flex items-start gap-3">
+                        <i data-lucide="alert-triangle" class="w-5 h-5 text-kingdom-red mt-0.5"></i>
+                        <div>
+                            <h4 class="text-sm font-bold text-red-900">Critical Bottleneck Detected</h4>
+                            <p class="text-xs text-red-700 mt-1">Legal Clearance for "FMCG Global Video" is delayed by 48 hours. Please review the timeline.</p>
+                        </div>
+                        <button onclick="showSection('timeline')" class="ml-auto text-xs font-bold bg-white text-red-700 px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50">View Timeline</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                            <p class="text-sm text-gray-400 font-medium mb-1">Active Projects</p>
+                            <h3 id="stat-active" class="text-3xl font-bold text-gray-800">0</h3> <!-- JS will update this to match table -->
+                            <div class="mt-4 flex items-center text-xs text-green-600 font-medium">
+                                <i data-lucide="trending-up" class="w-3 h-3 mr-1"></i> Running Campaigns
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                            <p class="text-sm text-gray-400 font-medium mb-1">Pending Client Approvals</p>
+                            <h3 id="stat-pending" class="text-3xl font-bold text-kingdom-red">0</h3> <!-- JS will update to match table -->
+                            <div class="mt-4 flex items-center text-xs text-amber-600 font-medium">
+                                <i data-lucide="clock" class="w-3 h-3 mr-1"></i> Action Required
+                            </div>
+                        </div>
+                        <!-- Efficiency Card - Updates dynamically based on bottlenecks -->
+                        <div id="card-efficiency" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                            <p class="text-sm text-gray-400 font-medium mb-1">Production Efficiency</p>
+                            <h3 id="stat-efficiency" class="text-3xl font-bold text-gray-800">94%</h3>
+                            <div id="stat-efficiency-detail" class="mt-4 flex items-center text-xs text-blue-600 font-medium">
+                                <i data-lucide="zap" class="w-3 h-3 mr-1"></i> Optimizing with DCA
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                            <h4 class="font-bold text-gray-800">Priority Production Timeline</h4>
+                            <button onclick="showSection('timeline')" class="text-sm text-kingdom-red font-semibold hover:underline">View Full Gantt</button>
+                        </div>
+                        <div class="p-6">
+                            <div id="dashboard-timeline" class="space-y-6">
+                                <!-- Items populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Projects Section -->
+                <section id="projects-section" class="hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-2xl font-bold">Client Portfolio</h3>
+                        <div class="relative">
+                            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                            <input type="text" placeholder="Search brands..." class="pl-10 px-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-kingdom-red focus:ring-1 focus:ring-kingdom-red transition-all w-64">
+                        </div>
+                    </div>
+                    <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Cards populated by JS -->
+                    </div>
+                </section>
+
+                <!-- Review Section (Dual Mode) -->
+                <section id="review-section" class="hidden space-y-6">
+                    <!-- Tab Navigation -->
+                    <div class="flex border-b border-gray-200 gap-8">
+                        <button onclick="switchReviewTab('video')" id="tab-video" class="tab-btn active pb-3 text-sm font-bold text-gray-600 transition-colors flex items-center gap-2">
+                            <i data-lucide="film" class="w-4 h-4"></i> Video Production Feedback
+                        </button>
+                        <button onclick="switchReviewTab('static')" id="tab-static" class="tab-btn pb-3 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-2">
+                            <i data-lucide="image" class="w-4 h-4"></i> Digital Asset Production
+                        </button>
+                    </div>
+
+                    <div id="asset-header" class="bg-white p-6 rounded-2xl border border-gray-100 flex justify-between items-center mb-6 shadow-sm">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                                <i id="header-icon" data-lucide="film" class="w-6 h-6 text-gray-400"></i>
+                            </div>
+                            <div>
+                                <h3 id="header-title" class="text-lg font-bold">Dettol - TikTok Hero Visual</h3>
+                                <p id="header-meta" class="text-xs text-gray-400">Version 2.4 • Video (MP4) • 00:30s</p>
+                            </div>
+                        </div>
+                        <div id="asset-status-badge" class="px-4 py-2 bg-amber-100 text-amber-700 text-xs font-bold rounded-full border border-amber-200">
+                            Pending Feedback
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col xl:flex-row gap-6">
+                        <!-- Annotation Canvas Container -->
+                        <div class="flex-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+                            <div class="mb-4 flex justify-between items-center">
+                                <div class="flex items-center gap-6">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Feedback Tools:</span>
+                                        <button id="tool-pin" onclick="togglePinMode()" class="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-xs font-semibold transition-all">
+                                            <i data-lucide="map-pin" class="w-3 h-3"></i> 
+                                            <span id="pin-text">Drop Pin on Frame</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-500"><i data-lucide="maximize" class="w-4 h-4"></i></button>
+                                </div>
+                            </div>
+                            
+                            <!-- VIEW 1: Video Player Container -->
+                            <div id="video-container" class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden group shadow-lg">
+                                <!-- Actual Display Area -->
+                                <div id="video-canvas" class="absolute inset-0 z-10">
+                                    <img src="https://placehold.co/800x450/111/FFF?text=VIDEO+FRAME+00:12" alt="Video Frame" class="w-full h-full object-cover opacity-80">
+                                    <div id="video-click-overlay" class="absolute inset-0 z-20 hidden" onclick="placePin(event)"></div>
+                                    <div id="video-pins-layer" class="absolute inset-0 pointer-events-none z-30"></div>
+                                    <div id="play-overlay" class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none transition-opacity duration-300">
+                                        <div class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
+                                            <i data-lucide="play" class="w-6 h-6 text-white fill-white ml-1"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Video Controls -->
+                                <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/80 to-transparent z-40 flex items-center px-6 gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <button onclick="togglePlay()" class="text-white hover:text-kingdom-red transition-colors">
+                                        <i id="play-icon" data-lucide="play" class="w-5 h-5 fill-current"></i>
+                                    </button>
+                                    <span class="text-xs font-mono text-white min-w-[80px]">00:12 / 00:30</span>
+                                    <div class="flex-1 relative h-1 bg-white/30 rounded-full cursor-pointer group/seeker">
+                                        <div class="absolute left-0 top-0 bottom-0 bg-kingdom-red w-[40%] rounded-full"></div>
+                                        <div class="absolute left-[40%] top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full scale-0 group-hover/seeker:scale-100 transition-transform shadow-sm"></div>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-white">
+                                        <i data-lucide="volume-2" class="w-4 h-4"></i>
+                                        <i data-lucide="settings" class="w-4 h-4"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- VIEW 2: Static Asset Container (Restored from V1) -->
+                            <div id="static-container" class="hidden relative bg-gray-900 rounded-2xl overflow-hidden aspect-video flex items-center justify-center group shadow-inner">
+                                <div id="static-canvas" class="absolute inset-0 w-full h-full">
+                                    <div id="static-click-overlay" class="absolute inset-0 z-10 hidden" onclick="placePin(event)"></div>
+                                    <img src="dettol.webp" alt="Dettol Static Mockup" class="w-full h-full object-cover">
+                                    <div id="static-pins-layer" class="absolute inset-0 pointer-events-none z-20"></div>
+                                </div>
+                            </div>
+                            
+                            <p id="tip-text" class="mt-4 text-xs text-center text-gray-400">
+                                <span class="font-bold text-gray-600">Pro Tip:</span> Pause video to drop a pin at a specific timestamp.
+                            </p>
+                        </div>
+
+                        <!-- Feedback Sidebar -->
+                        <div class="xl:w-80 flex flex-col gap-4">
+                            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex-1 flex flex-col min-h-[400px]">
+                                <h4 class="font-bold text-sm mb-4 flex items-center justify-between">
+                                    <span id="comments-title">Frame Comments</span>
+                                    <span id="comment-count" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-bold">3</span>
+                                </h4>
+                                <div id="comment-list" class="space-y-4 flex-1 overflow-y-auto no-scrollbar pr-2 mb-4">
+                                    <!-- Comments populated by JS -->
+                                </div>
+                                
+                                <div class="pt-4 border-t border-gray-100">
+                                    <div id="timestamp-indicator" class="text-[10px] text-gray-400 mb-2 flex items-center gap-1">
+                                        <i data-lucide="clock" class="w-3 h-3"></i> Commenting at <span class="font-bold text-gray-600">00:12</span>
+                                    </div>
+                                    <textarea id="new-comment-input" placeholder="Type your feedback here..." class="w-full text-xs p-3 rounded-xl bg-gray-50 border border-gray-200 outline-none focus:border-kingdom-red transition-all resize-none" rows="3"></textarea>
+                                    <button onclick="postComment()" class="w-full mt-3 bg-kingdom-red text-white py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-red-100 hover:opacity-90 transition-all flex justify-center gap-2">
+                                        <i data-lucide="send" class="w-3 h-3"></i> Post Feedback
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="approval-card" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm text-center">
+                                <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i data-lucide="check-circle" class="w-6 h-6"></i>
+                                </div>
+                                <p class="text-sm font-bold text-gray-800">Final Approval</p>
+                                <p class="text-[10px] text-gray-400 mt-1 mb-4">Confirming moves this to Media Strategy for scheduling.</p>
+                                <button onclick="openModal('approval-modal')" class="w-full bg-green-600 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-green-700 transition-all shadow-lg shadow-green-100">Approve This Draft</button>
+                            </div>
+
+                            <div id="approved-status" class="hidden bg-green-600 text-white p-6 rounded-2xl text-center shadow-lg animate-pulse">
+                                <i data-lucide="shield-check" class="w-8 h-8 mx-auto mb-2"></i>
+                                <p class="text-sm font-bold">Asset Approved</p>
+                                <p class="text-[10px] opacity-80">Sent to Media Strategy Department</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Timeline Section (Enhanced with Bottleneck Alert) -->
+                <section id="timeline-section" class="hidden">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 overflow-x-auto">
+                        <div class="flex justify-between items-center mb-10 min-w-[600px]">
+                            <div>
+                                <h3 class="text-2xl font-bold">Production Roadmap</h3>
+                                <p class="text-gray-400 text-sm">Cross-departmental sync view with status monitoring</p>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <!-- Legend -->
+                                <div class="flex items-center gap-3 text-[10px] font-bold uppercase text-gray-400 mr-6">
+                                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-500"></span> On Track</span>
+                                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-kingdom-red"></span> Bottleneck</span>
+                                </div>
+                                <div class="flex bg-gray-100 p-1 rounded-xl">
+                                    <button onclick="switchTimeline('week')" id="btn-week" class="px-6 py-2 bg-white shadow-sm rounded-lg text-xs font-bold transition-all text-gray-800">Week</button>
+                                    <button onclick="switchTimeline('month')" id="btn-month" class="px-6 py-2 rounded-lg text-xs font-bold text-gray-500 hover:text-gray-700 transition-all">Month</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="gantt-container" class="space-y-8 min-w-[600px]">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="campaign-modal" class="hidden fixed inset-0 z-[1200] flex items-center justify-center p-6 modal-overlay">
+        <div class="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl scale-95 transition-transform">
+            <h3 class="text-2xl font-bold mb-2">Start New Campaign</h3>
+            <p class="text-sm text-gray-400 mb-6">Define the brand and objectives to sync with teams.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Brand Name</label>
+                    <input id="modal-brand" type="text" placeholder="e.g. Dettol" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-kingdom-red text-sm transition-colors">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Campaign Title</label>
+                    <input id="modal-title" type="text" placeholder="e.g. Raya Special 2026" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-kingdom-red text-sm transition-colors">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Priority</label>
+                        <select id="modal-priority" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm cursor-pointer">
+                            <option>Standard</option>
+                            <option>Urgent</option>
+                            <option>Immediate</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Timeline</label>
+                        <select class="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm cursor-pointer">
+                            <option>2 Weeks</option>
+                            <option>1 Month</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 flex gap-3">
+                <button onclick="closeModal('campaign-modal')" class="flex-1 py-3 text-sm font-bold text-gray-400 hover:text-gray-600 transition-all">Cancel</button>
+                <button onclick="submitNewCampaign()" class="flex-[2] py-3 bg-kingdom-red text-white rounded-xl text-sm font-bold shadow-lg shadow-red-100 hover:opacity-90 transition-opacity">Create Project</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="approval-modal" class="hidden fixed inset-0 z-[1200] flex items-center justify-center p-6 modal-overlay">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl text-center">
+            <div class="w-16 h-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="check-circle-2" class="w-10 h-10"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-2">Final Sign-off?</h3>
+            <p class="text-sm text-gray-400 mb-8">This will freeze the current asset and notify the Media Strategy team for immediate deployment.</p>
+            
+            <div class="flex flex-col gap-3">
+                <button onclick="confirmApproval()" class="w-full py-4 bg-green-600 text-white rounded-2xl font-bold text-sm shadow-xl shadow-green-100 hover:bg-green-700 transition-colors">Yes, Approve Asset</button>
+                <button onclick="closeModal('approval-modal')" class="w-full py-4 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors">Keep Editing</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        let state = {
+            currentUser: null, // 'staff' or 'client'
+            activeSection: 'dashboard',
+            activeReviewTab: 'video', // 'video' or 'static'
+            isPinMode: false,
+            isPlaying: false,
+            reviewBadgeCount: 3,
+            isApproved: false,
+            projects: [
+                { id: 1, brand: 'Dettol', title: 'Lunar New Year Social', progress: 75, status: 'Active', color: 'bg-blue-500' },
+                { id: 2, brand: 'Enfagrow', title: 'Expert Series Tech Build', progress: 40, status: 'Review', color: 'bg-purple-500' },
+                { id: 3, brand: 'FMCG Global', title: 'Branding Video', progress: 90, status: 'Action Required', color: 'bg-red-500' },
+                { id: 4, brand: 'GrabFood', title: 'Ramadan 2026 Campaign', progress: 15, status: 'Active', color: 'bg-green-500' },
+                { id: 5, brand: 'Maybank', title: 'MAE App Promo Q1', progress: 60, status: 'Active', color: 'bg-yellow-500' }
+            ],
+            // Comments split by view type
+            comments: [
+                { id: 1, author: 'Brand Manager', text: 'At 00:04, logo needs to be 20% larger.', time: '12 mins ago', pin: 1, category: 'client', timestamp: '00:04', type: 'video' },
+                { id: 2, author: 'Kingdom Staff', text: 'Color grading adjustment made for transition at 00:10.', time: '2 hours ago', pin: 2, category: 'staff', timestamp: '00:10', type: 'video' },
+                { id: 3, author: 'Art Director', text: 'Safe zone check passed for TikTok UI.', time: '3 hours ago', pin: null, category: 'staff', timestamp: 'General', type: 'video' },
+                // Static Image Comments
+                { id: 4, author: 'Brand Manager', text: 'Can we move the product shot to the left?', time: '1 day ago', pin: 1, category: 'client', timestamp: 'Static', type: 'static' },
+                { id: 5, author: 'Kingdom Staff', text: 'Adjusted exposure on the background.', time: '1 day ago', pin: 2, category: 'staff', timestamp: 'Static', type: 'static' }
+            ],
+            // Pins split by view type
+            pins: {
+                video: [
+                    { id: 1, x: 30, y: 20 },
+                    { id: 2, x: 75, y: 60 }
+                ],
+                static: [
+                    { id: 1, x: 40, y: 40 },
+                    { id: 2, x: 80, y: 20 }
+                ]
+            },
+            timelineTasks: [
+                { id: 1, team: 'Creative Content Studio', label: 'Concept Development', width: '80%', margin: '0%', status: 'ontrack', colorClass: 'bg-pink-100 border-pink-200 text-pink-700' },
+                { id: 2, team: 'Digital Asset Production', label: 'Scaling Multi-format Assets', width: '60%', margin: '20%', status: 'ontrack', colorClass: 'bg-indigo-100 border-indigo-200 text-indigo-700' },
+                { id: 3, team: 'Legal & Compliance', label: 'Talent Clearance (Blocked)', width: '30%', margin: '50%', status: 'delayed', colorClass: 'bg-red-100 border-red-200 text-red-700 bottleneck-stripe' },
+                { id: 4, team: 'Video and Media Planning', label: 'Channel Allocation', width: '40%', margin: '60%', status: 'pending', colorClass: 'bg-gray-100 border-gray-200 text-gray-500' }
+            ]
+        };
+
+        // Authentication Logic
+        function login(role) {
+            state.currentUser = role;
+            
+            const avatar = document.getElementById('user-avatar');
+            const name = document.getElementById('user-name');
+            const roleEl = document.getElementById('user-role');
+            const newCampaignBtn = document.getElementById('btn-new-campaign');
+
+            if (role === 'staff') {
+                avatar.innerHTML = 'AS';
+                avatar.className = "w-10 h-10 rounded-full bg-kingdom-red flex items-center justify-center text-white font-bold overflow-hidden";
+                name.innerText = 'Aiman Syauqi';
+                roleEl.innerText = 'Kingdom Staff';
+                newCampaignBtn.classList.remove('hidden');
+                newCampaignBtn.classList.add('flex');
+                
+                document.getElementById('nav-dashboard').classList.remove('hidden');
+                document.getElementById('nav-projects').classList.remove('hidden');
+                document.getElementById('nav-timeline').classList.remove('hidden');
+                
+                showSection('dashboard');
+            } else {
+                avatar.innerHTML = '<i data-lucide="user"></i>';
+                avatar.className = "w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold overflow-hidden";
+                name.innerText = 'Brand Manager';
+                roleEl.innerText = 'Client Stakeholder';
+                newCampaignBtn.classList.add('hidden');
+                newCampaignBtn.classList.remove('flex');
+                
+                document.getElementById('nav-dashboard').classList.add('hidden');
+                document.getElementById('nav-projects').classList.add('hidden');
+                document.getElementById('nav-timeline').classList.add('hidden');
+                
+                showSection('review');
+            }
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            
+            showToast(`Welcome back, ${name.innerText}`, 'success');
+            
+            checkBottlenecks();
+            lucide.createIcons();
+        }
+
+        function logout() {
+            state.currentUser = null;
+            document.getElementById('app-container').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        function handleLogoClick() {
+            if (state.currentUser === 'staff') showSection('dashboard');
+            else showSection('review');
+        }
+
+        // Init
+        function init() {
+            lucide.createIcons();
+            renderDashboard();
+            renderProjects();
+            renderComments();
+            renderPins();
+            renderTimeline('week');
+        }
+
+        // Bottleneck Detection
+        function checkBottlenecks() {
+            const hasBottleneck = state.timelineTasks.some(t => t.status === 'delayed');
+            const alertBox = document.getElementById('dashboard-alert');
+            const efficiencyScore = document.getElementById('stat-efficiency');
+            const efficiencyDetail = document.getElementById('stat-efficiency-detail');
+            const efficiencyCard = document.getElementById('card-efficiency');
+
+            if (hasBottleneck) {
+                alertBox.classList.remove('hidden');
+                efficiencyScore.innerText = "78%";
+                efficiencyScore.classList.add('text-red-600');
+                efficiencyScore.classList.remove('text-gray-800');
+                efficiencyDetail.innerHTML = `<i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i> Impacted by Legal Delay`;
+                efficiencyDetail.className = "mt-4 flex items-center text-xs text-red-600 font-medium";
+                efficiencyCard.classList.add('border-red-200', 'bg-red-50/10');
+            } else {
+                alertBox.classList.add('hidden');
+            }
+        }
+
+        // Navigation
+        function showSection(id) {
+            const sections = ['dashboard', 'projects', 'review', 'timeline'];
+            sections.forEach(s => {
+                const section = document.getElementById(`${s}-section`);
+                const nav = document.getElementById(`nav-${s}`);
+                if(section) section.classList.add('hidden');
+                if(nav) {
+                    nav.classList.remove('active');
+                    nav.classList.add('text-gray-500');
+                }
+            });
+
+            document.getElementById(`${id}-section`).classList.remove('hidden');
+            const navBtn = document.getElementById(`nav-${id}`);
+            if(navBtn) {
+                navBtn.classList.add('active');
+                navBtn.classList.remove('text-gray-500');
+            }
+
+            const titles = {
+                'dashboard': 'Operational Dashboard',
+                'projects': 'Client Portfolio',
+                'review': 'Creative Review Bridge',
+                'timeline': 'Strategic Production Sync'
+            };
+            document.getElementById('section-title').innerText = titles[id];
+            state.activeSection = id;
+            lucide.createIcons();
+        }
+
+        // Review Tabs Switching
+        function switchReviewTab(tab) {
+            state.activeReviewTab = tab;
+            
+            // UI Toggle
+            const videoBtn = document.getElementById('tab-video');
+            const staticBtn = document.getElementById('tab-static');
+            const videoContainer = document.getElementById('video-container');
+            const staticContainer = document.getElementById('static-container');
+            
+            const headerTitle = document.getElementById('header-title');
+            const headerMeta = document.getElementById('header-meta');
+            const headerIcon = document.getElementById('header-icon');
+            const tipText = document.getElementById('tip-text');
+            const commentsTitle = document.getElementById('comments-title');
+            const timeIndicator = document.getElementById('timestamp-indicator');
+
+            if (tab === 'video') {
+                videoBtn.classList.add('active', 'text-gray-600');
+                videoBtn.classList.remove('text-gray-400');
+                staticBtn.classList.remove('active', 'text-gray-600');
+                staticBtn.classList.add('text-gray-400');
+                
+                videoContainer.classList.remove('hidden');
+                staticContainer.classList.add('hidden');
+                
+                headerTitle.innerText = "Dettol - TikTok Hero Visual";
+                headerMeta.innerText = "Version 2.4 • Video (MP4) • 00:30s";
+                headerIcon.setAttribute('data-lucide', 'film');
+                tipText.innerHTML = '<span class="font-bold text-gray-600">Pro Tip:</span> Pause video to drop a pin at a specific timestamp.';
+                commentsTitle.innerText = "Frame Comments";
+                timeIndicator.classList.remove('hidden');
+                document.getElementById('pin-text').innerText = "Drop Pin on Frame";
+            } else {
+                staticBtn.classList.add('active', 'text-gray-600');
+                staticBtn.classList.remove('text-gray-400');
+                videoBtn.classList.remove('active', 'text-gray-600');
+                videoBtn.classList.add('text-gray-400');
+                
+                staticContainer.classList.remove('hidden');
+                videoContainer.classList.add('hidden');
+                
+                headerTitle.innerText = "Dettol - Product Shot (Static)";
+                headerMeta.innerText = "Version 1.2 • Image (WEBP) • 1920x1080";
+                headerIcon.setAttribute('data-lucide', 'image');
+                tipText.innerHTML = '<span class="font-bold text-gray-600">Pro Tip:</span> Click anywhere on the image to leave feedback.';
+                commentsTitle.innerText = "Design Comments";
+                timeIndicator.classList.add('hidden');
+                document.getElementById('pin-text').innerText = "Drop Pin on Image";
+            }
+            
+            // Reset Pin Mode
+            if (state.isPinMode) togglePinMode();
+            
+            // Re-render data dependent on view
+            renderComments();
+            renderPins();
+            lucide.createIcons();
+        }
+
+        // Render Functions
+        function renderDashboard() {
+            const container = document.getElementById('dashboard-timeline');
+            container.innerHTML = state.projects.slice(0, 3).map(p => `
+                <div>
+                    <div class="flex justify-between text-xs font-semibold mb-2">
+                        <span class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full ${p.color}"></span>
+                            ${p.brand} | ${p.title}
+                        </span>
+                        <span class="${p.status === 'Action Required' ? 'text-kingdom-red font-bold' : 'text-gray-400'}">
+                            ${p.status === 'Action Required' ? 'Client Feedback Needed' : p.progress + '% Complete'}
+                        </span>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-1.5">
+                        <div class="${p.color} h-1.5 rounded-full" style="width: ${p.progress}%"></div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Exact Tally Logic
+            // Active = strictly status 'Active'
+            const activeCount = state.projects.filter(p => p.status === 'Active').length;
+            document.getElementById('stat-active').innerText = activeCount;
+            
+            // Pending = status NOT 'Active'
+            const pendingCount = state.projects.filter(p => p.status !== 'Active').length;
+            document.getElementById('stat-pending').innerText = pendingCount;
+        }
+
+        function renderProjects() {
+            const container = document.getElementById('projects-grid');
+            container.innerHTML = state.projects.map(p => `
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group" onclick="showSection('review')">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-red-50 group-hover:text-red-500 transition-colors">
+                            <i data-lucide="folder" class="w-5 h-5"></i>
+                        </div>
+                        <span class="px-2 py-1 bg-gray-50 text-gray-400 text-[10px] font-bold rounded uppercase">${p.status}</span>
+                    </div>
+                    <h4 class="font-bold text-gray-800">${p.brand}</h4>
+                    <p class="text-xs text-gray-400 mb-6 truncate">${p.title}</p>
+                    <div class="flex items-center justify-between text-[10px] font-bold text-gray-400 uppercase">
+                        <span>Progress</span>
+                        <span>${p.progress}%</span>
+                    </div>
+                    <div class="w-full bg-gray-100 h-1 rounded-full mt-2">
+                        <div class="${p.color} h-1 rounded-full" style="width: ${p.progress}%"></div>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderComments() {
+            const container = document.getElementById('comment-list');
+            // Filter comments by active tab
+            const filteredComments = state.comments.filter(c => c.type === state.activeReviewTab);
+            
+            container.innerHTML = filteredComments.map(c => `
+                <div id="comment-card-${c.id}" class="p-3 bg-gray-50 rounded-xl border-l-4 ${c.pin ? 'border-kingdom-red' : 'border-gray-300'} cursor-pointer hover:bg-white transition-all shadow-sm group" onclick="highlightPin(${c.pin})">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[10px] font-bold ${c.category === 'staff' ? 'text-kingdom-red' : 'text-blue-500'} uppercase">${c.author}</span>
+                        <span class="text-[9px] text-gray-400 group-hover:text-gray-500">${c.time}</span>
+                    </div>
+                    <p class="text-xs font-semibold text-gray-700 leading-relaxed">${c.text}</p>
+                    <div class="mt-2 flex justify-between items-center">
+                        ${c.pin ? `<span class="inline-block text-[9px] font-bold text-kingdom-red px-1.5 py-0.5 bg-red-50 rounded">Pin #${c.pin}</span>` : '<span></span>'}
+                        <span class="text-[9px] font-mono text-gray-400 bg-gray-100 px-1 rounded">${c.timestamp || '00:00'}</span>
+                    </div>
+                </div>
+            `).reverse().join(''); 
+            
+            const count = filteredComments.length;
+            document.getElementById('comment-count').innerText = count;
+            // Update main badge to total of all comments or just current? 
+            // Usually total is better for "notifications".
+            document.getElementById('review-badge').innerText = state.comments.length; 
+        }
+
+        function renderPins() {
+            // Determine container based on active tab
+            const containerId = state.activeReviewTab === 'video' ? 'video-pins-layer' : 'static-pins-layer';
+            const container = document.getElementById(containerId);
+            
+            const currentPins = state.pins[state.activeReviewTab];
+            
+            container.innerHTML = currentPins.map(p => `
+                <div id="pin-${p.id}" class="pin" style="left: ${p.x}%; top: ${p.y}%;" onclick="focusComment(${p.id})">${p.id}</div>
+            `).join('');
+        }
+
+        // Functional Logics
+        function togglePlay() {
+            // Only works if in video tab
+            if (state.activeReviewTab !== 'video') return;
+
+            state.isPlaying = !state.isPlaying;
+            const icon = document.getElementById('play-icon');
+            const playOverlay = document.getElementById('play-overlay');
+            
+            if (state.isPlaying) {
+                icon.setAttribute('data-lucide', 'pause');
+                playOverlay.style.opacity = '0';
+            } else {
+                icon.setAttribute('data-lucide', 'play');
+                playOverlay.style.opacity = '1';
+            }
+            lucide.createIcons();
+        }
+
+        function togglePinMode() {
+            state.isPinMode = !state.isPinMode;
+            const btn = document.getElementById('tool-pin');
+            
+            // Dynamic ID selectors based on active tab
+            const overlayId = state.activeReviewTab === 'video' ? 'video-click-overlay' : 'static-click-overlay';
+            const canvasId = state.activeReviewTab === 'video' ? 'video-canvas' : 'static-canvas';
+            const containerId = state.activeReviewTab === 'video' ? 'video-container' : 'static-container';
+            const overlay = document.getElementById(overlayId);
+            const canvas = document.getElementById(canvasId);
+            const container = document.getElementById(containerId);
+
+            if (state.isPinMode) {
+                if(state.isPlaying) togglePlay(); 
+                
+                btn.classList.add('bg-kingdom-red', 'text-white', 'border-kingdom-red');
+                btn.classList.remove('hover:bg-gray-50');
+                
+                document.getElementById('pin-text').innerText = state.activeReviewTab === 'video' ? 'Click on Frame' : 'Click on Image';
+                
+                overlay.classList.remove('hidden');
+                canvas.classList.add('crosshair');
+                container.classList.add('ring-2', 'ring-kingdom-red', 'ring-offset-2');
+                showToast('Pin mode active. Click to comment.', 'info');
+            } else {
+                btn.classList.remove('bg-kingdom-red', 'text-white', 'border-kingdom-red');
+                btn.classList.add('hover:bg-gray-50');
+                
+                document.getElementById('pin-text').innerText = state.activeReviewTab === 'video' ? 'Drop Pin on Frame' : 'Drop Pin on Image';
+                
+                overlay.classList.add('hidden');
+                canvas.classList.remove('crosshair');
+                container.classList.remove('ring-2', 'ring-kingdom-red', 'ring-offset-2');
+            }
+        }
+
+        function placePin(e) {
+            const rect = e.target.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+            const currentPinList = state.pins[state.activeReviewTab];
+            const nextId = currentPinList.length + 1;
+            
+            currentPinList.push({ id: nextId, x: x.toFixed(1), y: y.toFixed(1) });
+            
+            renderPins();
+            const newPin = document.getElementById(`pin-${nextId}`);
+            if(newPin) newPin.classList.add('new-anim');
+
+            togglePinMode(); 
+            document.getElementById('new-comment-input').focus();
+            showToast(`Pin #${nextId} placed. Add details.`, 'success');
+        }
+
+        function postComment() {
+            const input = document.getElementById('new-comment-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const currentPins = state.pins[state.activeReviewTab];
+            const currentComments = state.comments.filter(c => c.type === state.activeReviewTab);
+            
+            // Logic to find if the newest pin has a comment yet
+            const latestPinId = currentPins.length; 
+            // Simple logic: If we have more pins than comments for this view, assign to newest pin
+            // Otherwise null (general comment)
+            const pinToAssign = currentPins.length > currentComments.filter(c => c.pin).length ? latestPinId : null;
+
+            state.comments.push({
+                id: Date.now(),
+                author: state.currentUser === 'staff' ? 'Kingdom Staff' : 'Brand Manager',
+                text: text,
+                time: 'Just now',
+                pin: pinToAssign,
+                category: state.currentUser,
+                timestamp: state.activeReviewTab === 'video' ? '00:12' : 'Static',
+                type: state.activeReviewTab
+            });
+
+            input.value = '';
+            renderComments();
+            showToast('Feedback posted successfully.', 'success');
+        }
+
+        function focusComment(pinId) {
+            const card = document.getElementById(`comment-card-${pinId}`);
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                card.classList.add('ring-2', 'ring-kingdom-red');
+                setTimeout(() => card.classList.remove('ring-2', 'ring-kingdom-red'), 2000);
+            }
+        }
+
+        function highlightPin(pinId) {
+            if (!pinId) return;
+            // Ensure pin is in current view
+            const pin = document.getElementById(`pin-${pinId}`);
+            if(pin) {
+                pin.classList.add('scale-150', 'ring-4', 'ring-red-100');
+                setTimeout(() => pin.classList.remove('scale-150', 'ring-4', 'ring-red-100'), 1500);
+            }
+        }
+
+        // Modals
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function submitNewCampaign() {
+            const brand = document.getElementById('modal-brand').value;
+            const title = document.getElementById('modal-title').value;
+            const priority = document.getElementById('modal-priority').value;
+
+            if (!brand || !title) {
+                showToast('Please fill in all fields.', 'error');
+                return;
+            }
+
+            const newProj = {
+                id: state.projects.length + 1,
+                brand: brand,
+                title: title,
+                progress: 0,
+                status: priority === 'Standard' ? 'Active' : 'Action Required',
+                color: priority === 'Standard' ? 'bg-blue-500' : 'bg-red-500'
+            };
+
+            state.projects.unshift(newProj);
+            renderDashboard();
+            renderProjects();
+            closeModal('campaign-modal');
+            
+            document.getElementById('modal-brand').value = '';
+            document.getElementById('modal-title').value = '';
+            
+            showToast(`Campaign for ${brand} initiated.`, 'success');
+        }
+
+        function confirmApproval() {
+            state.isApproved = true;
+            document.getElementById('approval-card').classList.add('hidden');
+            document.getElementById('approved-status').classList.remove('hidden');
+            document.getElementById('asset-status-badge').innerText = 'Approved & Syncing';
+            document.getElementById('asset-status-badge').className = 'px-4 py-2 bg-green-100 text-green-700 text-xs font-bold rounded-full border border-green-200';
+            
+            closeModal('approval-modal');
+            showToast('Asset Approved! Teams have been notified.', 'success');
+        }
+
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-green-600',
+                error: 'bg-red-600',
+                info: 'bg-indigo-600'
+            };
+            
+            toast.className = `toast text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-xs font-bold ${colors[type]} transform transition-all duration-300`;
+            toast.innerHTML = `<i data-lucide="${type === 'success' ? 'check' : 'info'}" class="w-4 h-4"></i> ${msg}`;
+            
+            container.appendChild(toast);
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Timeline View Switch
+        function switchTimeline(view) {
+            const weekBtn = document.getElementById('btn-week');
+            const monthBtn = document.getElementById('btn-month');
+            
+            if (view === 'week') {
+                weekBtn.className = 'px-6 py-2 bg-white shadow-sm rounded-lg text-xs font-bold transition-all text-gray-800';
+                monthBtn.className = 'px-6 py-2 rounded-lg text-xs font-bold text-gray-500 hover:text-gray-700 transition-all';
+            } else {
+                monthBtn.className = 'px-6 py-2 bg-white shadow-sm rounded-lg text-xs font-bold transition-all text-gray-800';
+                weekBtn.className = 'px-6 py-2 rounded-lg text-xs font-bold text-gray-500 hover:text-gray-700 transition-all';
+            }
+            renderTimeline(view);
+        }
+
+        function renderTimeline(view) {
+            const container = document.getElementById('gantt-container');
+            const columns = view === 'week' ? ['Jan 12', 'Jan 13', 'Jan 14', 'Jan 15', 'Jan 16'] : ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+            
+            const rowsHtml = state.timelineTasks.map(task => {
+                const statusIcon = task.status === 'delayed' 
+                    ? `<i data-lucide="alert-octagon" class="w-3 h-3 text-red-600 mr-2"></i>` 
+                    : '';
+                
+                return `
+                <tr>
+                    <td class="py-6 font-bold text-sm text-gray-700">${task.team}</td>
+                    <td colspan="${columns.length}" class="py-6 relative">
+                        <div class="absolute inset-0 flex">
+                            ${columns.map(() => '<div class="flex-1 border-r border-dashed border-gray-100 h-full"></div>').join('')}
+                        </div>
+                        <div class="relative z-10 h-8 rounded-xl flex items-center px-4 text-[10px] font-bold border shadow-sm transition-all hover:scale-[1.02] cursor-pointer ${task.colorClass}" 
+                             style="width: ${task.width}; margin-left: ${task.margin}">
+                            ${statusIcon}
+                            ${task.label}
+                        </div>
+                    </td>
+                </tr>
+            `}).join('');
+
+            container.innerHTML = `
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">
+                            <th class="pb-4 w-48 pl-2">Project Unit</th>
+                            ${columns.map(c => `<th class="pb-4 text-center">${c}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+            `;
+            lucide.createIcons();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
